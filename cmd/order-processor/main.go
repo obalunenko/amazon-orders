@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/obalunenko/amazon-orders/moneyutils"
+	"github.com/obalunenko/amazon-orders/internal"
+	"github.com/obalunenko/amazon-orders/internal/moneyutils"
 )
 
 var inputFile = flag.String("input", "", "input csv file")
@@ -23,24 +24,24 @@ func main() {
 		log.Fatalf("failed to open file: %v", err)
 	}
 
-	orders, err := parseCSV(f)
+	orders, err := internal.ParseCSV(f)
 	if err != nil {
 		log.Fatalf("failed to parse csv: %v", err)
 	}
 
-	currencies := getOrdersCurrencies(orders)
+	currencies := internal.GetOrdersCurrencies(orders)
 	if len(currencies) == 0 {
 		log.Fatalf("no currency found")
 	}
 
-	var ordersByCurrency = make(map[string][]order)
+	var ordersByCurrency = make(map[string][]internal.Order)
 
 	for _, currency := range currencies {
-		ordersByCurrency[currency] = getOrdersByCurrency(orders, currency)
+		ordersByCurrency[currency] = internal.GetOrdersByCurrency(orders, currency)
 	}
 
 	for currency := range ordersByCurrency {
-		sum := calculateSpends(ordersByCurrency[currency])
+		sum := internal.CalculateSpends(ordersByCurrency[currency])
 
 		fmt.Printf("Total spend in %s: %s\n", currency, moneyutils.ToString(moneyutils.Round(sum, 2)))
 	}
