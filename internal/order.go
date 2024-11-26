@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/csv"
@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/obalunenko/amazon-orders/moneyutils"
+	"github.com/obalunenko/amazon-orders/internal/moneyutils"
 )
 
 // csv header:
@@ -19,7 +19,7 @@ import (
 // "Shipping Address","Billing Address","Carrier Name & Tracking Number","Product Name","Gift Message",
 // "Gift Sender Name","Gift Recipient Contact Details","Item Serial Number"
 
-type order struct {
+type Order struct {
 	Website                    string
 	OrderID                    string
 	OrderDate                  string // 2024-11-03T12:32:17Z layout
@@ -179,20 +179,20 @@ func parseShipmentStatus(s string) shipmentStatus {
 	}
 }
 
-func calculateSpends(orders []order) float64 {
+func CalculateSpends(orders []Order) float64 {
 	// Calculate the total spend sum of all orders
 	// Sum of all orders = sum(unit_price * quantity)
 	var sum float64
 
 	for i, o := range orders {
 		if o.OrderStatus.Equals(orderStatusCanceled) {
-			log.Printf("[WARN]: [order:%d] order is canceled, skipping: %s\n", i+1, o.OrderID)
+			log.Printf("[WARN]: [Order:%d] Order is canceled, skipping: %s\n", i+1, o.OrderID)
 
 			continue
 		}
 
 		if o.Quantity == 0 {
-			log.Printf("[WARN]: [order:%d] quantity is 0, assuming 1: %s\n", i+1, o.OrderID)
+			log.Printf("[WARN]: [Order:%d] quantity is 0, assuming 1: %s\n", i+1, o.OrderID)
 			// Make assumption that quantity is 1 if it is not provided.
 			o.Quantity = 1
 		}
@@ -203,7 +203,7 @@ func calculateSpends(orders []order) float64 {
 	return sum
 }
 
-func parseCSV(f *os.File) ([]order, error) {
+func ParseCSV(f *os.File) ([]Order, error) {
 	csvReader := csv.NewReader(f)
 	csvReader.Comma = ','
 	csvReader.LazyQuotes = true
@@ -214,7 +214,7 @@ func parseCSV(f *os.File) ([]order, error) {
 		return nil, fmt.Errorf("failed to read csv: %v", err)
 	}
 
-	orders := make([]order, 0, len(records)-1) // skip header.
+	orders := make([]Order, 0, len(records)-1) // skip header.
 
 	for i, record := range records {
 		if i == 0 {
@@ -251,7 +251,7 @@ func parseCSV(f *os.File) ([]order, error) {
 			return nil, fmt.Errorf("[line: %d]: failed to parse quantity: %v", i+1, err)
 		}
 
-		o := order{
+		o := Order{
 			Website:                    record[ColWebsite],
 			OrderID:                    record[ColOrderID],
 			OrderDate:                  record[ColOrderDate],
@@ -302,7 +302,7 @@ func parsePrice(s string) (float64, error) {
 	return moneyutils.ParseFormatted(s, r)
 }
 
-func getOrdersCurrencies(orders []order) []string {
+func GetOrdersCurrencies(orders []Order) []string {
 	if len(orders) == 0 {
 		return nil
 	}
@@ -322,8 +322,8 @@ func getOrdersCurrencies(orders []order) []string {
 	return currencies
 }
 
-func getOrdersByCurrency(orders []order, cur string) []order {
-	result := make([]order, 0, len(orders))
+func GetOrdersByCurrency(orders []Order, cur string) []Order {
+	result := make([]Order, 0, len(orders))
 
 	for _, o := range orders {
 		if strings.EqualFold(o.Currency, cur) {

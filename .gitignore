@@ -27,3 +27,6 @@ go.work.sum
 ./amazon-orders
 
 amazon-orders
+./bin
+
+dist/
