@@ -56,16 +56,6 @@ jobs:
           make build
         shell: bash
 
-      - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          install-only: true
-
-      - name: Check release config
-        run: |
-          make check-releaser
-        shell: bash
-
   testing:
     strategy:
       fail-fast: false
@@ -93,6 +83,36 @@ jobs:
       - name: Test
         run: |
           make test
+        shell: bash
+
+
+  linting:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [ 'ubuntu-22.04' ]
+        go-version: [1.23.x]
+    runs-on: ${{ matrix.os }}
+    name: Run Linters
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up go
+        uses: actions/setup-go@v5.1.0
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - run: |
+          go version
+        shell: bash
+
+      - name: Linting
+        run: |
+          make vet
         shell: bash
 
 
